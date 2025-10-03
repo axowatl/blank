@@ -1,4 +1,5 @@
 const OriginalNotification = window.Notification;
+const OriginalError = window.Error;
 
 function createToast(message) {
     // Create the main container if it doesn't exist
@@ -68,3 +69,8 @@ window.Notification = function (...args) {
     // Return the new instance
     return newNotification;
 };
+
+window.Error = function (...args) {
+    new Notification(args[0]);
+    return OriginalError(args);
+}
