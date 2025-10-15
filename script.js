@@ -70,6 +70,8 @@ window.Notification = function (...args) {
 };
 
 const canvas = document.getElementById('myCanvas');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 const ctx = canvas.getContext('2d');
 let customCursorX = canvas.width / 2;
 let customCursorY = canvas.height / 2;
