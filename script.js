@@ -1,5 +1,4 @@
 const OriginalNotification = window.Notification;
-const OriginalError = window.Error;
 
 function createToast(message) {
     // Create the main container if it doesn't exist
@@ -70,7 +69,35 @@ window.Notification = function (...args) {
     return newNotification;
 };
 
-window.Error = function (...args) {
-    new Notification(args[0]);
-    return OriginalError(args);
+const canvas = document.getElementById('myCanvas');
+const ctx = canvas.getContext('2d');
+let customCursorX = canvas.width / 2;
+let customCursorY = canvas.height / 2;
+let sensitivity = 0.7; // Adjust this value
+
+canvas.addEventListener('mousemove', (event) => {
+    // Get raw mouse movement
+    const rawMovementX = event.movementX;
+    const rawMovementY = event.movementY;
+
+    // Apply sensitivity factor
+    const scaledMovementX = rawMovementX * sensitivity;
+    const scaledMovementY = rawMovementY * sensitivity;
+
+    // Update custom cursor position
+    customCursorX += scaledMovementX;
+    customCursorY += scaledMovementY;
+
+    // Redraw your custom cursor or game elements
+    drawCustomCursor();
+});
+
+function drawCustomCursor() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+    ctx.fillStyle = 'red';
+    ctx.beginPath();
+    ctx.arc(customCursorX, customCursorY, 10, 0, Math.PI * 2);
+    ctx.fill();
 }
+
+drawCustomCursor(); // Initial draw
