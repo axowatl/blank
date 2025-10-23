@@ -1,105 +1,95 @@
-const OriginalNotification = window.Notification;
+/*
+ * The goal is to make a tower defense game that uses window.open("", "_blank", "popup");
+ * They enemies should be their own seperate windows that combine with other windows when they get to close to each other
+*/
 
-function createToast(message) {
-    // Create the main container if it doesn't exist
-    let container = document.getElementById("toast-container");
-    if (!container) {
-        container = document.createElement("div");
-        container.id = "toast-container";
-        container.style.cssText = `
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-    `;
-        document.body.appendChild(container);
-    }
+const enemies = [];
+const centerX = screen.width / 2;
+const centerY = screen.height / 2;
 
-    // Create the toast element
-    const toast = document.createElement("div");
-    toast.style.cssText = `
-    display: flex;
-    align-items: center;
-    background-color: #333;
-    color: white;
-    padding: 15px;
-    border-radius: 8px;
-    margin-top: 10px;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
-  `;
-    toast.innerHTML = `<p style="margin: 0; padding: 0;">${message}</p>`;
+function spawnEnemy(size = 200) {
+    const left = Math.random() * (screen.width - size);
+    const top = Math.random() * (screen.height - size);
 
-    // Append the new toast and animate it in
-    container.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = "1";
-        toast.style.transform = "translateY(0)";
-    }, 10);
+    const enemyWindow = window.open("", "_blank",
+        `width=${size},height=${size},left=${left},top=${top}`);
 
-    // Automatically remove the toast after a few seconds with an exit animation
-    setTimeout(() => {
-        toast.style.opacity = "0";
-        toast.style.transform = "translateY(20px)";
-        // Wait for the exit transition to finish before removing the element
-        setTimeout(() => {
-            toast.remove();
-            // Remove container if it becomes empty
-            if (container.children.length === 0) {
-                container.remove();
-            }
-        }, 500);
-    }, 3000);
-}
+    enemyWindow.document.title = "Enemy";
+    enemyWindow.document.body.style.background = "black";
+    enemyWindow.document.body.style.margin = "0";
 
-window.Notification = function (...args) {
-    // Create the new notification instance using the original constructor
-    const newNotification = new OriginalNotification(...args);
-
-    // Attach your global error handler to the new instance
-    newNotification.addEventListener('error', (e) => {
-        createToast(args[0]);
+    enemies.push({
+        window: enemyWindow,
+        x: left,
+        y: top,
+        size,
     });
-
-    // Return the new instance
-    return newNotification;
-};
-
-const canvas = document.getElementById('myCanvas');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-const ctx = canvas.getContext('2d');
-let customCursorX = canvas.width / 2;
-let customCursorY = canvas.height / 2;
-let sensitivity = 0.7; // Adjust this value
-
-canvas.addEventListener('mousemove', (event) => {
-    // Get raw mouse movement
-    const rawMovementX = event.movementX;
-    const rawMovementY = event.movementY;
-
-    // Apply sensitivity factor
-    const scaledMovementX = rawMovementX * sensitivity;
-    const scaledMovementY = rawMovementY * sensitivity;
-
-    // Update custom cursor position
-    customCursorX += scaledMovementX;
-    customCursorY += scaledMovementY;
-
-    // Redraw your custom cursor or game elements
-    drawCustomCursor();
-});
-
-function drawCustomCursor() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
-    ctx.fillStyle = 'red';
-    ctx.beginPath();
-    ctx.arc(customCursorX, customCursorY, 10, 0, Math.PI * 2);
-    ctx.fill();
 }
 
-drawCustomCursor(); // Initial draw
+function moveEnemies() {
+    enemies.forEach(enemy => {
+        const targetX = centerX - enemy.size / 2;
+        const targetY = centerY - enemy.size / 2;
+
+        // Move a bit toward the center
+        enemy.x += (targetX - enemy.x) * 0.02;
+        enemy.y += (targetY - enemy.y) * 0.02;
+
+        try {
+            enemy.window.moveTo(enemy.x, enemy.y);
+        } catch (e) {
+            // Ignore errors if popup was closed manually
+        }
+    });
+}
+
+function checkCollisions() {
+    for (let i = 0; i < enemies.length; i++) {
+        for (let j = i + 1; j < enemies.length; j++) {
+            const a = enemies[i];
+            const b = enemies[j];
+            const dx = (a.x + a.size / 2) - (b.x + b.size / 2);
+            const dy = (a.y + a.size / 2) - (b.y + b.size / 2);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < (a.size + b.size) / 2) {
+                // Combine them!
+                const newSize = Math.min(a.size + b.size * 0.5, 600);
+                const newX = (a.x + b.x) / 2;
+                const newY = (a.y + b.y) / 2;
+
+                try { a.window.close(); } catch { }
+                try { b.window.close(); } catch { }
+
+                enemies.splice(j, 1);
+                enemies.splice(i, 1);
+
+                spawnEnemyAt(newX, newY, newSize);
+                return; // restart loop after mutation
+            }
+        }
+    }
+}
+
+function spawnEnemyAt(x, y, size) {
+    const enemyWindow = window.open("", "_blank",
+        `width=${size},height=${size},left=${x},top=${y}`);
+    enemyWindow.document.body.style.background = "red";
+    enemyWindow.document.body.style.margin = "0";
+
+    enemies.push({
+        window: enemyWindow,
+        x,
+        y,
+        size,
+    });
+}
+
+function loop() {
+    moveEnemies();
+    checkCollisions();
+    requestAnimationFrame(loop);
+}
+
+for (let i = 0; i < 5; i++) spawnEnemy();
+loop();
