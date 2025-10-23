@@ -1,9 +1,9 @@
 const enemies = [];
 const centerX = screen.width / 2;
 const centerY = screen.height / 2;
-const speed = 3; // constant speed toward center (pixels per frame)
+const speed = 1; // constant speed toward center (pixels per frame)
 
-function spawnEnemy(size = 200) {
+function spawnEnemy(size = 100) {
     const left = Math.random() * (screen.width - size);
     const top = Math.random() * (screen.height - size);
 
@@ -40,9 +40,9 @@ function moveEnemies() {
             enemy.y += vy;
 
             try {
-            enemy.window.moveTo(enemy.x, enemy.y);
+                enemy.window.moveTo(enemy.x, enemy.y);
             } catch (e) {
-            // ignore if user closed popup
+                // ignore if user closed popup
             }
         }
     });
@@ -60,18 +60,18 @@ function checkCollisions() {
 
             // Simple overlap check
             if (dist < a.size / 2) {
-            try { a.window.close(); } catch {}
-            try { b.window.close(); } catch {}
+                try { a.window.close(); } catch {}
+                try { b.window.close(); } catch {}
 
-            // Remove both
-            enemies.splice(j, 1);
-            enemies.splice(i, 1);
+                // Remove both
+                enemies.splice(j, 1);
+                enemies.splice(i, 1);
 
-            // Spawn a new merged one in the middle (same size)
-            const newX = (a.x + b.x) / 2;
-            const newY = (a.y + b.y) / 2;
-            spawnEnemyAt(newX, newY, a.size);
-            return; // restart after mutation
+                // Spawn a new merged one in the middle (same size)
+                const newX = (a.x + b.x) / 2;
+                const newY = (a.y + b.y) / 2;
+                spawnEnemyAt(newX, newY, a.size);
+                return; // restart after mutation
             }
         }
     }
