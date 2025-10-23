@@ -1,11 +1,7 @@
-/*
- * The goal is to make a tower defense game that uses window.open("", "_blank", "popup");
- * They enemies should be their own seperate windows that combine with other windows when they get to close to each other
-*/
-
 const enemies = [];
 const centerX = screen.width / 2;
 const centerY = screen.height / 2;
+const speed = 3; // constant speed toward center (pixels per frame)
 
 function spawnEnemy(size = 200) {
     const left = Math.random() * (screen.width - size);
@@ -28,17 +24,26 @@ function spawnEnemy(size = 200) {
 
 function moveEnemies() {
     enemies.forEach(enemy => {
-        const targetX = centerX - enemy.size / 2;
-        const targetY = centerY - enemy.size / 2;
+        const centerTargetX = centerX - enemy.size / 2;
+        const centerTargetY = centerY - enemy.size / 2;
 
-        // Move a bit toward the center
-        enemy.x += (targetX - enemy.x) * 0.02;
-        enemy.y += (targetY - enemy.y) * 0.02;
+        // Vector toward the center
+        const dx = centerTargetX - enemy.x;
+        const dy = centerTargetY - enemy.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
 
-        try {
+        // Normalize and move at constant speed
+        if (dist > 1) {
+            const vx = (dx / dist) * speed;
+            const vy = (dy / dist) * speed;
+            enemy.x += vx;
+            enemy.y += vy;
+
+            try {
             enemy.window.moveTo(enemy.x, enemy.y);
-        } catch (e) {
-            // Ignore errors if popup was closed manually
+            } catch (e) {
+            // ignore if user closed popup
+            }
         }
     });
 }
@@ -48,24 +53,25 @@ function checkCollisions() {
         for (let j = i + 1; j < enemies.length; j++) {
             const a = enemies[i];
             const b = enemies[j];
+
             const dx = (a.x + a.size / 2) - (b.x + b.size / 2);
             const dy = (a.y + a.size / 2) - (b.y + b.size / 2);
             const dist = Math.sqrt(dx * dx + dy * dy);
 
-            if (dist < (a.size + b.size) / 2) {
-                // Combine them!
-                const newSize = Math.min(a.size + b.size * 0.5, 600);
-                const newX = (a.x + b.x) / 2;
-                const newY = (a.y + b.y) / 2;
+            // Simple overlap check
+            if (dist < a.size / 2) {
+            try { a.window.close(); } catch {}
+            try { b.window.close(); } catch {}
 
-                try { a.window.close(); } catch { }
-                try { b.window.close(); } catch { }
+            // Remove both
+            enemies.splice(j, 1);
+            enemies.splice(i, 1);
 
-                enemies.splice(j, 1);
-                enemies.splice(i, 1);
-
-                spawnEnemyAt(newX, newY, newSize);
-                return; // restart loop after mutation
+            // Spawn a new merged one in the middle (same size)
+            const newX = (a.x + b.x) / 2;
+            const newY = (a.y + b.y) / 2;
+            spawnEnemyAt(newX, newY, a.size);
+            return; // restart after mutation
             }
         }
     }
@@ -74,7 +80,7 @@ function checkCollisions() {
 function spawnEnemyAt(x, y, size) {
     const enemyWindow = window.open("", "_blank",
         `width=${size},height=${size},left=${x},top=${y}`);
-    enemyWindow.document.body.style.background = "red";
+    enemyWindow.document.body.style.background = "black";
     enemyWindow.document.body.style.margin = "0";
 
     enemies.push({
@@ -91,5 +97,7 @@ function loop() {
     requestAnimationFrame(loop);
 }
 
-for (let i = 0; i < 5; i++) spawnEnemy();
-loop();
+document.getElementById("start").onclick = () => {
+    for (let i = 0; i < 6; i++) spawnEnemy();
+    loop();
+};
