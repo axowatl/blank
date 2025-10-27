@@ -17,10 +17,13 @@ const tileCountX = Math.floor(width / tileSize);
 const tileCountY = Math.floor(height / tileSize);
 const cells = [];
 
+// Use a separate array for the grid to store cells
+const grid = new Array(tileCountX * tileCountY);
+
 class Cell {
     /**
-     * @param {number} x 
-     * @param {number} y 
+     * @param {number} x
+     * @param {number} y
      */
     constructor(x, y) {
         this.x = x;
@@ -33,6 +36,9 @@ class Cell {
         const x = this.x * tileSize;
         const y = this.y * tileSize;
         ctx.beginPath();
+        ctx.strokeStyle = "white"; // Make walls more visible
+        
+        // Only draw walls that exist
         if (this.walls.left) {
             ctx.moveTo(x, y);
             ctx.lineTo(x, y + tileSize);
@@ -72,24 +78,22 @@ class rbt {
         const startY = Math.floor(Math.random() * tileCountY);
         const startingIndex = indexFromCoord(startX, startY);
 
-        let current = cells[startingIndex];
+        let current = grid[startingIndex];
         current.visited = true;
         this.stack.push(current);
 
-        // Keep generating until the stack is empty
-        while (this.stack.length > 0) {
-            this.step();
-        }
-
-        // Re-render the final maze
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        cells.forEach((element) => {
-            element.render();
-        });
+        // This loop was too fast and didn't allow for animation.
+        // The step() function will be called in a loop for animation.
+        // `requestAnimationFrame` is ideal for this.
     }
 
     // Generates the maze step-by-step
     step() {
+        // Stop the animation once the stack is empty
+        if (this.stack.length === 0) {
+            return;
+        }
+
         let current = this.stack[this.stack.length - 1];
         let neighbors = this.getUnvisitedNeighbors(current);
 
@@ -117,13 +121,16 @@ class rbt {
             { x: cell.x, y: cell.y - 1 }, // Up
             { x: cell.x + 1, y: cell.y }, // Right
             { x: cell.x, y: cell.y + 1 }, // Down
-            { x: cell.x - 1, y: cell.x }  // Left
+            { x: cell.x - 1, y: cell.y }  // Left - Corrected bug: changed cell.x to cell.y
         ];
 
         neighborCoordinates.forEach(coord => {
             const index = indexFromCoord(coord.x, coord.y);
-            if (index !== -1 && !cells[index].visited) {
-                neighbors.push(cells[index]);
+            if (index !== -1) {
+                const neighbor = grid[index]; // Use the main grid array
+                if (!neighbor.visited) {
+                    neighbors.push(neighbor);
+                }
             }
         });
 
@@ -133,19 +140,19 @@ class rbt {
     // Removes the wall between two adjacent cells
     removeWalls(cell1, cell2) {
         const x = cell1.x - cell2.x;
-        if (x === 1) {
+        if (x === 1) { // cell1 is to the right of cell2
             cell1.walls.left = false;
             cell2.walls.right = false;
-        } else if (x === -1) {
+        } else if (x === -1) { // cell1 is to the left of cell2
             cell1.walls.right = false;
             cell2.walls.left = false;
         }
 
         const y = cell1.y - cell2.y;
-        if (y === 1) {
+        if (y === 1) { // cell1 is below cell2
             cell1.walls.up = false;
             cell2.walls.down = false;
-        } else if (y === -1) {
+        } else if (y === -1) { // cell1 is above cell2
             cell1.walls.down = false;
             cell2.walls.up = false;
         }
@@ -155,15 +162,33 @@ class rbt {
 // Initialize the grid with cells
 for (let y = 0; y < tileCountY; y++) {
     for (let x = 0; x < tileCountX; x++) {
-        cells.push(new Cell(x, y));
+        grid[indexFromCoord(x,y)] = new Cell(x, y);
     }
 }
 
-// Draw the initial grid
-cells.forEach((element) => {
-    element.render();
-});
+// Draw the initial grid before starting the generation
+function drawInitialGrid() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    grid.forEach((element) => {
+        element.render();
+    });
+}
 
 // Generate and display the maze
 const mazeGenerator = new rbt();
+
+// Animation loop
+function animate() {
+    mazeGenerator.step();
+    // Clear and redraw the canvas with each step
+    drawInitialGrid();
+    if (mazeGenerator.stack.length > 0) {
+        requestAnimationFrame(animate);
+    }
+}
+
+// Kick off the process
+drawInitialGrid();
 mazeGenerator.genMaze();
+animate();
+
