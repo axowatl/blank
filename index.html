@@ -7,9 +7,33 @@
   <meta name="author" content="">
   <meta name="description" content="">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      /* Prevent scrollbars if content exceeds viewport */
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+    }
+
+    canvas {
+      display: block;
+      /* Removes extra space below the canvas element */
+      width: 100vw;
+      /* 100% of the viewport width */
+      height: 100vh;
+      /* 100% of the viewport height */
+    }
+  </style>
 </head>
 
 <body>
+  <canvas id="canvas"></canvas>
   <script src="utils/notifications.js"></script>
   <script src="script.js" type="module"></script>
 </body>
