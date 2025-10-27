@@ -6,8 +6,8 @@ const canvas = document.getElementById("canvas");
  * @type {CanvasRenderingContext2D}
  */
 const ctx = canvas.getContext("2d");
-const width = canvas.width;
-const height = canvas.height;
+const width = window.innerWidth;
+const height = window.innerHeight;
 canvas.width = width;
 canvas.height = height;
 console.log(`(${width}, ${height})`);
