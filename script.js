@@ -75,17 +75,6 @@ class rbt {
         let current = cells[startingIndex];
         current.visited = true;
         this.stack.push(current);
-
-        // Keep generating until the stack is empty
-        while (this.stack.length > 0) {
-            this.step();
-        }
-
-        // Re-render the final maze
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        cells.forEach((element) => {
-            element.render();
-        });
     }
 
     // Generates the maze step-by-step
@@ -127,8 +116,6 @@ class rbt {
             }
         });
 
-        new Notification(`(${cell}) has neighbors (${neighbors})`);
-
         return neighbors;
     }
 
@@ -169,3 +156,16 @@ cells.forEach((element) => {
 // Generate and display the maze
 const mazeGenerator = new rbt();
 mazeGenerator.genMaze();
+// Keep generating until the stack is empty
+function loop() {
+    this.step();
+
+    // Re-render the final maze
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    cells.forEach((element) => {
+        element.render();
+    });
+    if (this.stack.length > 0) {
+        requestAnimationFrame(loop);
+    }
+}
