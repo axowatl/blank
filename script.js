@@ -10,7 +10,8 @@ const width = canvas.width;
 const height = canvas.height;
 canvas.width = width;
 canvas.height = height;
-const tileSize = 50;
+console.log(`(${width}, ${height})`);
+const tileSize = 10;
 
 for (let x = 0; x < width; x += tileSize) {
     for (let y = 0; y < height; y += tileSize) {
