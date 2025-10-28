@@ -165,7 +165,7 @@ function loop() {
     cells.forEach((element) => {
         element.render();
     });
-    if (this.stack.length > 0) {
+    if (mazeGenerator.stack.length > 0) {
         requestAnimationFrame(loop);
     }
 }
