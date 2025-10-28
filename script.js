@@ -158,7 +158,7 @@ const mazeGenerator = new rbt();
 mazeGenerator.genMaze();
 // Keep generating until the stack is empty
 function loop() {
-    this.step();
+    mazeGenerator.step();
 
     // Re-render the final maze
     ctx.clearRect(0, 0, canvas.width, canvas.height);
